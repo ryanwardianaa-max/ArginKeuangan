@@ -101,10 +101,21 @@ window.checkAuth = () => {
     
     if (user.role === 'admin') {
       document.getElementById('nav-users-container').classList.remove('hidden');
+      const mUsers = document.getElementById('mobile-nav-users');
+      if (mUsers) {
+        mUsers.classList.remove('hidden');
+        mUsers.classList.add('flex');
+      }
     } else {
       document.getElementById('nav-users-container').classList.add('hidden');
-      if (currentView === 'users') currentView = 'dashboard';
+      const mUsers = document.getElementById('mobile-nav-users');
+      if (mUsers) {
+        mUsers.classList.add('hidden');
+        mUsers.classList.remove('flex');
+      }
     }
+    if (user.role !== 'admin' && currentView === 'users') currentView = 'dashboard';
+    
     navigateTo(currentView);
   } else {
     document.getElementById('login-wrapper').classList.remove('hidden');
@@ -234,15 +245,34 @@ document.getElementById('nav-settings').addEventListener('click', (e) => { e.pre
 const navUsersBtn = document.getElementById('nav-users');
 if (navUsersBtn) navUsersBtn.addEventListener('click', (e) => { e.preventDefault(); navigateTo('users'); });
 
+document.getElementById('mobile-nav-dashboard').addEventListener('click', (e) => { e.preventDefault(); navigateTo('dashboard'); });
+document.getElementById('mobile-nav-transactions').addEventListener('click', (e) => { e.preventDefault(); navigateTo('transactions'); });
+document.getElementById('mobile-nav-categories').addEventListener('click', (e) => { e.preventDefault(); navigateTo('categories'); });
+document.getElementById('mobile-nav-settings').addEventListener('click', (e) => { e.preventDefault(); navigateTo('settings'); });
+const mNavUsersBtn = document.getElementById('mobile-nav-users');
+if (mNavUsersBtn) mNavUsersBtn.addEventListener('click', (e) => { e.preventDefault(); navigateTo('users'); });
+
 function updateNavHighlight() {
   ['dashboard', 'transactions', 'categories', 'settings', 'users'].forEach(view => {
     const el = document.getElementById(`nav-${view}`);
+    const mel = document.getElementById(`mobile-nav-${view}`);
+    const isUsers = view === 'users';
+    
     if (el) {
-      const isUsers = view === 'users';
       if (view === currentView) {
         el.className = 'text-primary whitespace-nowrap' + (isUsers ? ' flex items-center gap-1.5' : '');
       } else {
         el.className = 'text-body hover:text-primary transition-colors whitespace-nowrap' + (isUsers ? ' flex items-center gap-1.5' : '');
+      }
+    }
+    
+    if (mel) {
+      // Keep hidden if it's users and currently hidden by checkAuth
+      const isHidden = mel.classList.contains('hidden');
+      if (view === currentView) {
+        mel.className = (isHidden ? 'hidden ' : 'flex ') + 'flex-col items-center gap-1 p-2 text-primary';
+      } else {
+        mel.className = (isHidden ? 'hidden ' : 'flex ') + 'flex-col items-center gap-1 p-2 text-body hover:text-primary transition-colors';
       }
     }
   });
