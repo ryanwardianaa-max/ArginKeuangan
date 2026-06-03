@@ -964,11 +964,11 @@ async function renderSettings() {
       <div class="bg-red-950/20 border border-red-900/50 rounded-xl p-5 md:p-6 shadow-sm">
         <h3 class="text-lg font-bold text-trading-down mb-2 flex items-center gap-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-          Zona Berbahaya - Reset Semua Data
+          Zona Berbahaya - Reset Data Transaksi
         </h3>
-        <p class="text-sm text-body mb-4">Peringatan: Menekan tombol ini akan menghapus <strong>seluruh data transaksi, daftar kategori, dan dompet secara permanen untuk SEMUA pengguna</strong>. Aplikasi akan mereset ke keadaan awal.</p>
+        <p class="text-sm text-body mb-4">Peringatan: Menekan tombol ini akan menghapus <strong>seluruh data transaksi keuangan secara permanen</strong>. Kategori dan dompet tetap aman. Semua saldo akan menjadi NOL.</p>
         <button onclick="resetPersonalData()" class="bg-trading-down hover:bg-red-600 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition-colors shadow-sm w-full sm:w-auto">
-          Reset Semua Data
+          Reset Data Transaksi
         </button>
       </div>
       ` : ''}
@@ -980,19 +980,20 @@ window.resetPersonalData = async () => {
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
   if(!currentUser.username || currentUser.role !== 'admin') return;
   
-  if (confirm("PERINGATAN KERAS! Anda yakin ingin MENGHAPUS SEMUA DATA transaksi, kategori, dan dompet? Aksi ini tidak dapat dibatalkan!")) {
-    if (confirm("Silakan konfirmasi sekali lagi. Yakin ingin MENGHAPUS SEMUA DATA?")) {
-      await supabase.from('transactions').delete().neq('id', 0);
-      await supabase.from('categories').delete().neq('id', 0);
-      await supabase.from('accounts').delete().neq('id', 0);
-      
-      await initUserData();
+  if (confirm("PERINGATAN KERAS! Anda yakin ingin MENGHAPUS SEMUA DATA TRANSAKSI? Kategori dan dompet tetap aman. Aksi ini tidak dapat dibatalkan!")) {
+    if (confirm("Silakan konfirmasi sekali lagi. Yakin ingin MENGHAPUS SEMUA TRANSAKSI?")) {
+      // Fetch all transaction IDs then delete one by one
+      const { data: txs } = await supabase.from('transactions').select('id');
+      if (txs && txs.length > 0) {
+        const ids = txs.map(t => t.id);
+        await supabase.from('transactions').delete().in('id', ids);
+      }
       
       window.activeAccount = 'Semua Akun';
       localStorage.setItem('active_account', 'Semua Akun');
       window.dateFilterType = 'Semua';
       
-      alert("Semua data berhasil direset menjadi NOL.");
+      alert("Semua data transaksi berhasil direset menjadi NOL. Kategori dan dompet tetap tersimpan.");
       navigateTo('dashboard');
     }
   }
