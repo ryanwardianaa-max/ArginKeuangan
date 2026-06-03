@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ArginStore Enterprise Finance</title>
+  <title>ARGIN GROUP Enterprise Finance</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
@@ -58,11 +58,9 @@
   <div id="login-wrapper" class="min-h-screen flex items-center justify-center bg-[url('https://images.unsplash.com/photo-1618044733300-9472054094ee?q=80&w=2071&auto=format&fit=crop')] bg-cover bg-center">
     <div class="absolute inset-0 bg-ink/70 backdrop-blur-md"></div>
     <div class="relative z-10 w-full max-w-md p-8 bg-surface-card-dark/80 backdrop-blur-xl border border-hairline-on-dark/50 shadow-2xl rounded-2xl">
-      <div class="flex items-center justify-center gap-2 mb-8">
-        <span class="bg-primary/20 p-2 rounded-xl">
-          <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-        </span>
-        <span class="font-bold text-3xl text-on-dark tracking-tight">ArginStore</span>
+      <div class="flex items-center justify-center gap-3 mb-8">
+        <img src="./logo.png" alt="ARGIN GROUP" class="w-12 h-12 rounded-xl object-cover" />
+        <span class="font-bold text-3xl text-on-dark tracking-tight">ARGIN GROUP</span>
       </div>
       <h2 class="text-xl text-center text-on-dark font-semibold mb-6">Login to Enterprise Finance</h2>
       
@@ -88,10 +86,8 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex flex-wrap items-center justify-between py-3 gap-y-3">
       <div class="flex items-center gap-2">
-        <span class="bg-primary/20 p-1.5 rounded-lg">
-          <svg class="w-5 h-5 sm:w-6 sm:h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-        </span>
-        <span class="font-bold text-base sm:text-lg text-on-dark tracking-tight">ArginStore</span>
+        <img src="./logo.png" alt="ARGIN GROUP" class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg object-cover" />
+        <span class="font-bold text-base sm:text-lg text-on-dark tracking-tight">ARGIN GROUP</span>
       </div>
       
       <div class="flex items-center gap-2 sm:gap-4">
@@ -409,7 +405,7 @@
   <!-- Category Modal -->
   <div id="catModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-ink/80 backdrop-blur-sm" onclick="closeCatModal()"></div>
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm px-4">
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm px-4 relative z-10">
       <div class="bg-surface-card-dark rounded-xl border border-hairline-on-dark shadow-2xl overflow-hidden animate-slide-up">
         <div class="px-6 py-4 border-b border-hairline-on-dark flex justify-between items-center bg-surface-elevated-dark">
           <h3 class="text-lg font-bold text-on-dark" id="catModalTitle">Kategori Baru</h3>
@@ -437,7 +433,7 @@
   <!-- User Modal -->
   <div id="userModal" class="fixed inset-0 z-50 hidden">
     <div class="absolute inset-0 bg-ink/80 backdrop-blur-sm" onclick="closeUserModal()"></div>
-    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm px-4">
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm px-4 relative z-10">
       <div class="bg-surface-card-dark rounded-xl border border-hairline-on-dark shadow-2xl overflow-hidden animate-slide-up">
         <div class="px-6 py-4 border-b border-hairline-on-dark flex justify-between items-center bg-surface-elevated-dark">
           <h3 class="text-lg font-bold text-on-dark" id="userModalTitle">Tambah User Baru</h3>

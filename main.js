@@ -8,42 +8,35 @@ const defaultCategories = [
 ];
 const defaultAccounts = ['Dompet Utama'];
 
-async function initUserData() {
-  const user = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
-  if(!user.username) return;
+const SHARED_ID = 'shared';
 
-  const { data: cats } = await supabase.from('categories').select('id').eq('user_id', user.username);
+async function initUserData() {
+  const { data: cats } = await supabase.from('categories').select('id').eq('user_id', SHARED_ID);
   if (!cats || cats.length === 0) {
-    const catPayload = defaultCategories.map(c => ({ user_id: user.username, name: c }));
+    const catPayload = defaultCategories.map(c => ({ user_id: SHARED_ID, name: c }));
     await supabase.from('categories').insert(catPayload);
   }
   
-  const { data: accs } = await supabase.from('accounts').select('id').eq('user_id', user.username);
+  const { data: accs } = await supabase.from('accounts').select('id').eq('user_id', SHARED_ID);
   if (!accs || accs.length === 0) {
-    await supabase.from('accounts').insert([{ user_id: user.username, name: 'Dompet Utama' }]);
+    await supabase.from('accounts').insert([{ user_id: SHARED_ID, name: 'Dompet Utama' }]);
   }
 }
 
 async function getTransactions() {
-  const user = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
-  if(!user.username) return [];
-  const { data, error } = await supabase.from('transactions').select('*').eq('user_id', user.username);
+  const { data, error } = await supabase.from('transactions').select('*').eq('user_id', SHARED_ID);
   if (error) { console.error(error); return []; }
   return data;
 }
 
 async function getCategoryList() {
-  const user = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
-  if(!user.username) return [];
-  const { data, error } = await supabase.from('categories').select('*').eq('user_id', user.username);
+  const { data, error } = await supabase.from('categories').select('*').eq('user_id', SHARED_ID);
   if (error) { console.error(error); return []; }
   return data.map(c => c.name);
 }
 
 async function getAccountList() {
-  const user = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
-  if(!user.username) return [];
-  const { data, error } = await supabase.from('accounts').select('*').eq('user_id', user.username);
+  const { data, error } = await supabase.from('accounts').select('*').eq('user_id', SHARED_ID);
   if (error) { console.error(error); return []; }
   return data.map(a => a.name);
 }
@@ -214,8 +207,7 @@ window.switchGlobalAccount = async (val) => {
     if (newAcc && newAcc.trim() !== '') {
       const accs = await getAccountList();
       if (!accs.includes(newAcc.trim())) {
-        const user = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
-        await supabase.from('accounts').insert([{ user_id: user.username, name: newAcc.trim() }]);
+        await supabase.from('accounts').insert([{ user_id: SHARED_ID, name: newAcc.trim() }]);
         window.activeAccount = newAcc.trim();
       } else {
         alert("Akun tersebut sudah ada.");
@@ -309,7 +301,7 @@ async function render() {
   } else if (currentView === 'categories') {
     await renderCategories();
   } else if (currentView === 'settings') {
-    renderSettings();
+    await renderSettings();
   } else if (currentView === 'users') {
     await renderUsers();
   }
@@ -740,8 +732,8 @@ async function renderCategories() {
     <div class="space-y-4 md:space-y-6 animate-fade-in">
       <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 class="text-2xl font-bold text-on-dark">Kategori Pengeluaran</h2>
-          <p class="text-body mt-1">Kelola pos-pos pengeluaran operasional Anda.</p>
+          <h2 class="text-2xl font-bold text-on-dark">Kategori</h2>
+          <p class="text-body mt-1">Kelola kategori untuk transaksi pemasukan & pengeluaran.</p>
         </div>
         <button onclick="openCatModal()" class="bg-surface-elevated-dark hover:bg-surface-card-dark border border-hairline-on-dark text-on-dark px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-sm w-full sm:w-auto flex justify-center items-center gap-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
@@ -764,7 +756,8 @@ async function renderCategories() {
                 <tr class="hover:bg-surface-elevated-dark transition-colors group">
                   <td class="px-4 md:px-6 py-3 font-tabular text-sm text-muted">${idx + 1}</td>
                   <td class="px-4 md:px-6 py-3 text-sm text-on-dark font-medium">${cat}</td>
-                  <td class="px-4 md:px-6 py-3 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <td class="px-4 md:px-6 py-3 text-center">
+                    <button onclick="editCategory('${cat}')" class="text-primary hover:text-primary-active text-sm font-medium mr-3">Edit</button>
                     <button onclick="deleteCategory('${cat}')" class="text-trading-down hover:text-red-400 text-sm font-medium">Hapus</button>
                   </td>
                 </tr>
@@ -921,14 +914,15 @@ window.deleteUser = async (username) => {
   }
 };
 
-function renderSettings() {
+async function renderSettings() {
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+  const accs = await getAccountList();
   
   appDiv.innerHTML = `
     <div class="space-y-6 md:space-y-8 animate-fade-in">
       <div>
-        <h2 class="text-2xl font-bold text-on-dark">Pengaturan Pribadi</h2>
-        <p class="text-body mt-1">Kelola data dan preferensi akun Anda.</p>
+        <h2 class="text-2xl font-bold text-on-dark">Pengaturan</h2>
+        <p class="text-body mt-1">Kelola akun pribadi dan dompet bisnis.</p>
       </div>
 
       <div class="bg-surface-card-dark rounded-xl border border-hairline-on-dark p-6 shadow-sm">
@@ -941,30 +935,51 @@ function renderSettings() {
         </div>
       </div>
 
-      <!-- Zona Berbahaya (Reset Data Pribadi) -->
+      <!-- Kelola Dompet -->
+      <div class="bg-surface-card-dark rounded-xl border border-hairline-on-dark p-6 shadow-sm">
+        <h3 class="text-lg font-bold text-on-dark mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+          Kelola Dompet / Toko
+        </h3>
+        <div class="space-y-2">
+          ${accs.map(acc => `
+            <div class="flex items-center justify-between bg-surface-elevated-dark rounded-lg px-4 py-3 border border-hairline-on-dark">
+              <span class="text-on-dark text-sm font-medium">${acc}</span>
+              <div class="flex items-center gap-2">
+                <button onclick="renameAccount('${acc}')" class="text-primary hover:text-primary-active text-xs font-semibold px-2 py-1 rounded border border-primary/30 hover:bg-primary/10 transition-colors">Rename</button>
+                <button onclick="deleteAccount('${acc}')" class="text-trading-down hover:text-red-400 text-xs font-semibold px-2 py-1 rounded border border-red-500/30 hover:bg-red-500/10 transition-colors">Hapus</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Zona Berbahaya -->
+      ${currentUser.role === 'admin' ? `
       <div class="bg-red-950/20 border border-red-900/50 rounded-xl p-5 md:p-6 shadow-sm">
         <h3 class="text-lg font-bold text-trading-down mb-2 flex items-center gap-2">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-          Zona Berbahaya - Reset Data Pribadi
+          Zona Berbahaya - Reset Semua Data
         </h3>
-        <p class="text-sm text-body mb-4">Peringatan: Menekan tombol ini akan menghapus <strong>seluruh data transaksi, daftar kategori, dan dompet secara permanen HANYA untuk akun Anda (${currentUser.username})</strong>. Data akun orang lain tidak akan terpengaruh. Aplikasi akan mereset data Anda ke keadaan awal seperti baru pertama kali dibuka.</p>
+        <p class="text-sm text-body mb-4">Peringatan: Menekan tombol ini akan menghapus <strong>seluruh data transaksi, daftar kategori, dan dompet secara permanen untuk SEMUA pengguna</strong>. Aplikasi akan mereset ke keadaan awal.</p>
         <button onclick="resetPersonalData()" class="bg-trading-down hover:bg-red-600 text-white px-4 py-2.5 rounded-lg text-sm font-bold transition-colors shadow-sm w-full sm:w-auto">
-          Reset Data Pribadi Saya
+          Reset Semua Data
         </button>
       </div>
+      ` : ''}
     </div>
   `;
 }
 
 window.resetPersonalData = async () => {
   const currentUser = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
-  if(!currentUser.username) return;
+  if(!currentUser.username || currentUser.role !== 'admin') return;
   
-  if (confirm("PERINGATAN KERAS! Anda yakin ingin MENGHAPUS SEMUA DATA transaksi, kategori, dan dompet PRIBADI ANDA? Aksi ini tidak dapat dibatalkan!")) {
-    if (confirm("Silakan konfirmasi sekali lagi. Yakin ingin MENGHAPUS SEMUA DATA ANDA?")) {
-      await supabase.from('transactions').delete().eq('user_id', currentUser.username);
-      await supabase.from('categories').delete().eq('user_id', currentUser.username);
-      await supabase.from('accounts').delete().eq('user_id', currentUser.username);
+  if (confirm("PERINGATAN KERAS! Anda yakin ingin MENGHAPUS SEMUA DATA transaksi, kategori, dan dompet? Aksi ini tidak dapat dibatalkan!")) {
+    if (confirm("Silakan konfirmasi sekali lagi. Yakin ingin MENGHAPUS SEMUA DATA?")) {
+      await supabase.from('transactions').delete().eq('user_id', SHARED_ID);
+      await supabase.from('categories').delete().eq('user_id', SHARED_ID);
+      await supabase.from('accounts').delete().eq('user_id', SHARED_ID);
       
       await initUserData();
       
@@ -972,9 +987,48 @@ window.resetPersonalData = async () => {
       localStorage.setItem('active_account', 'Semua Akun');
       window.dateFilterType = 'Semua';
       
-      alert("Semua data PRIBADI Anda berhasil direset menjadi NOL.");
+      alert("Semua data berhasil direset menjadi NOL.");
       navigateTo('dashboard');
     }
+  }
+};
+
+window.renameAccount = async (oldName) => {
+  const newName = prompt(`Ganti nama dompet "${oldName}" menjadi:`, oldName);
+  if (!newName || newName.trim() === '' || newName.trim() === oldName) return;
+  
+  const accs = await getAccountList();
+  if (accs.includes(newName.trim())) {
+    alert('Nama dompet tersebut sudah ada.');
+    return;
+  }
+  
+  await supabase.from('accounts').update({ name: newName.trim() }).eq('user_id', SHARED_ID).eq('name', oldName);
+  await supabase.from('transactions').update({ akun: newName.trim() }).eq('user_id', SHARED_ID).eq('akun', oldName);
+  
+  if (window.activeAccount === oldName) {
+    window.activeAccount = newName.trim();
+    localStorage.setItem('active_account', newName.trim());
+  }
+  
+  render();
+};
+
+window.deleteAccount = async (name) => {
+  const accs = await getAccountList();
+  if (accs.length <= 1) {
+    alert('Tidak bisa menghapus dompet terakhir. Minimal harus ada 1 dompet.');
+    return;
+  }
+  if (confirm(`Hapus dompet "${name}"? Semua transaksi di dompet ini juga akan dihapus.`)) {
+    await supabase.from('transactions').delete().eq('user_id', SHARED_ID).eq('akun', name);
+    await supabase.from('accounts').delete().eq('user_id', SHARED_ID).eq('name', name);
+    
+    if (window.activeAccount === name) {
+      window.activeAccount = 'Semua Akun';
+      localStorage.setItem('active_account', 'Semua Akun');
+    }
+    render();
   }
 };
 
@@ -1167,7 +1221,7 @@ window.saveTransaction = async (e) => {
   const strDate = `${d.getDate().toString().padStart(2, '0')}-${d.toLocaleString('id-ID', { month: 'short' })}-${d.getFullYear()}`;
   
   const payload = {
-    user_id: user.username,
+    user_id: SHARED_ID,
     tanggal: strDate,
     jenis: document.getElementById('txJenis').value,
     nama: document.getElementById('txPihak').value,
@@ -1234,32 +1288,52 @@ window.closeCatModal = () => {
   document.getElementById('catModal').classList.add('hidden');
 };
 
+window.editCategory = (oldName) => {
+  document.getElementById('catOldName').value = oldName;
+  document.getElementById('catName').value = oldName;
+  document.getElementById('catModalTitle').innerText = 'Edit Kategori';
+  document.getElementById('catModal').classList.remove('hidden');
+};
+
 window.saveCategory = async (e) => {
   e.preventDefault();
   const btn = document.querySelector('#catForm button[type="submit"]');
   btn.innerHTML = 'Menyimpan...';
   
-  const user = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+  const oldName = document.getElementById('catOldName').value;
   const name = document.getElementById('catName').value.trim();
   if (name === '') return;
 
   const cats = await getCategoryList();
-  if (cats.includes(name)) {
-    alert("Kategori sudah ada!");
-    btn.innerHTML = 'Simpan';
-    return;
+  
+  if (oldName) {
+    // Edit mode
+    if (name !== oldName && cats.includes(name)) {
+      alert("Kategori sudah ada!");
+      btn.innerHTML = 'Simpan';
+      return;
+    }
+    await supabase.from('categories').update({ name }).eq('user_id', SHARED_ID).eq('name', oldName);
+    // Update transactions that use the old category name
+    await supabase.from('transactions').update({ kategori: name }).eq('user_id', SHARED_ID).eq('kategori', oldName);
+  } else {
+    // Add mode
+    if (cats.includes(name)) {
+      alert("Kategori sudah ada!");
+      btn.innerHTML = 'Simpan';
+      return;
+    }
+    await supabase.from('categories').insert([{ user_id: SHARED_ID, name }]);
   }
   
-  await supabase.from('categories').insert([{ user_id: user.username, name }]);
   btn.innerHTML = 'Simpan';
   closeCatModal();
   render();
 };
 
 window.deleteCategory = async (name) => {
-  const user = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
   if (confirm(`Hapus kategori "${name}"?`)) {
-    await supabase.from('categories').delete().eq('name', name).eq('user_id', user.username);
+    await supabase.from('categories').delete().eq('name', name).eq('user_id', SHARED_ID);
     render();
   }
 };
