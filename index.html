@@ -94,14 +94,18 @@
         <span class="font-bold text-base sm:text-lg text-on-dark tracking-tight">ArginStore</span>
       </div>
       
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2 sm:gap-4">
         <select id="global-account-selector" onchange="window.switchGlobalAccount(this.value)" class="bg-surface-elevated-dark border border-hairline-on-dark text-on-dark rounded-md px-2 py-1.5 sm:px-3 text-xs sm:text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary font-semibold max-w-[130px] sm:max-w-[150px] truncate cursor-pointer">
         </select>
         
-        <div class="hidden sm:flex items-center gap-3 border-l border-hairline-on-dark pl-4">
+        <div class="hidden sm:flex items-center border-l border-hairline-on-dark pl-4">
           <span class="text-sm font-medium text-body">👋 <span id="nav-user-name" class="font-bold text-on-dark">Admin</span></span>
-          <button onclick="handleLogout()" class="text-xs bg-surface-elevated-dark hover:bg-surface-card-dark border border-hairline-on-dark text-on-dark px-3 py-1.5 rounded-md font-semibold transition-colors">Logout</button>
         </div>
+        
+        <button onclick="handleLogout()" class="text-xs bg-surface-elevated-dark hover:bg-surface-card-dark border border-hairline-on-dark text-trading-down sm:text-on-dark px-2 sm:px-3 py-1.5 rounded-md font-semibold transition-colors flex items-center gap-1">
+          <svg class="w-4 h-4 sm:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+          <span class="hidden sm:inline">Logout</span>
+        </button>
       </div>
 
       <nav class="hidden sm:block w-full sm:w-auto order-last sm:order-none overflow-x-auto hide-scrollbar pt-1 sm:pt-0">
@@ -124,7 +128,7 @@
   <main class="max-w-7xl mx-auto p-4 md:p-6 pb-24 md:pb-6">
     
     <!-- Global Date Filter -->
-    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface-card-dark p-3 sm:p-4 rounded-xl border border-hairline-on-dark shadow-sm">
+    <div id="global-date-filter-container" class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface-card-dark p-3 sm:p-4 rounded-xl border border-hairline-on-dark shadow-sm">
       <div class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 hide-scrollbar">
         <button onclick="setDateFilter('Semua')" id="btn-filter-Semua" class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors bg-primary text-on-primary whitespace-nowrap">Semua</button>
         <button onclick="setDateFilter('Hari')" id="btn-filter-Hari" class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors bg-surface-elevated-dark text-body hover:text-on-dark border border-hairline-on-dark whitespace-nowrap">Hari</button>

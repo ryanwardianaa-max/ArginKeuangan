@@ -286,6 +286,18 @@ async function navigateTo(view) {
 
 async function render() {
   await updateGlobalAccountSelector();
+  
+  const dateFilter = document.getElementById('global-date-filter-container');
+  if (dateFilter) {
+    if (['dashboard', 'transactions'].includes(currentView)) {
+      dateFilter.classList.remove('hidden');
+      dateFilter.classList.add('flex');
+    } else {
+      dateFilter.classList.add('hidden');
+      dateFilter.classList.remove('flex');
+    }
+  }
+
   if (currentView === 'dashboard') {
     await renderDashboard();
   } else if (currentView === 'transactions') {
