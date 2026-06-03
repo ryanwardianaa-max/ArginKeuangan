@@ -97,6 +97,8 @@ window.checkAuth = () => {
     document.getElementById('login-wrapper').classList.add('hidden');
     document.getElementById('login-wrapper').classList.remove('flex');
     document.getElementById('app-wrapper').classList.remove('hidden');
+    const mobileNav = document.getElementById('mobile-nav');
+    if (mobileNav) { mobileNav.classList.remove('hidden'); }
     document.getElementById('nav-user-name').textContent = user.username;
     
     if (user.role === 'admin') {
@@ -121,6 +123,8 @@ window.checkAuth = () => {
     document.getElementById('login-wrapper').classList.remove('hidden');
     document.getElementById('login-wrapper').classList.add('flex');
     document.getElementById('app-wrapper').classList.add('hidden');
+    const mobileNav = document.getElementById('mobile-nav');
+    if (mobileNav) { mobileNav.classList.add('hidden'); }
   }
 };
 
