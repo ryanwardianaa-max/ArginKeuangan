@@ -8,56 +8,40 @@ const defaultCategories = [
 ];
 const defaultAccounts = ['Dompet Utama'];
 
-const SHARED_ID = 'shared';
+function getCurrentUsername() {
+  const user = JSON.parse(sessionStorage.getItem('currentUser') || '{}');
+  return user.username || 'admin';
+}
 
 async function initUserData() {
-  // Migrate old per-user data to shared ecosystem
-  // Update all non-shared categories to shared
-  await supabase.from('categories').update({ user_id: SHARED_ID }).neq('user_id', SHARED_ID);
-  await supabase.from('accounts').update({ user_id: SHARED_ID }).neq('user_id', SHARED_ID);
-  await supabase.from('transactions').update({ user_id: SHARED_ID }).neq('user_id', SHARED_ID);
-
-  // Deduplicate categories (in case migration created duplicates)
-  const { data: allCats } = await supabase.from('categories').select('*').eq('user_id', SHARED_ID);
-  if (allCats) {
-    const seen = new Set();
-    for (const cat of allCats) {
-      if (seen.has(cat.name)) {
-        await supabase.from('categories').delete().eq('id', cat.id);
-      } else {
-        seen.add(cat.name);
-      }
-    }
-  }
-
-  // Initialize default categories if none exist
-  const { data: cats } = await supabase.from('categories').select('id').eq('user_id', SHARED_ID);
+  // Check if categories exist (any user_id)
+  const { data: cats } = await supabase.from('categories').select('id');
   if (!cats || cats.length === 0) {
-    const catPayload = defaultCategories.map(c => ({ user_id: SHARED_ID, name: c }));
+    const catPayload = defaultCategories.map(c => ({ user_id: getCurrentUsername(), name: c }));
     await supabase.from('categories').insert(catPayload);
   }
   
-  // Initialize default account if none exist
-  const { data: accs } = await supabase.from('accounts').select('id').eq('user_id', SHARED_ID);
+  // Check if accounts exist (any user_id)
+  const { data: accs } = await supabase.from('accounts').select('id');
   if (!accs || accs.length === 0) {
-    await supabase.from('accounts').insert([{ user_id: SHARED_ID, name: 'Dompet Utama' }]);
+    await supabase.from('accounts').insert([{ user_id: getCurrentUsername(), name: 'Dompet Utama' }]);
   }
 }
 
 async function getTransactions() {
-  const { data, error } = await supabase.from('transactions').select('*').eq('user_id', SHARED_ID);
+  const { data, error } = await supabase.from('transactions').select('*');
   if (error) { console.error(error); return []; }
   return data;
 }
 
 async function getCategoryList() {
-  const { data, error } = await supabase.from('categories').select('*').eq('user_id', SHARED_ID);
+  const { data, error } = await supabase.from('categories').select('*');
   if (error) { console.error(error); return []; }
   return data.map(c => c.name);
 }
 
 async function getAccountList() {
-  const { data, error } = await supabase.from('accounts').select('*').eq('user_id', SHARED_ID);
+  const { data, error } = await supabase.from('accounts').select('*');
   if (error) { console.error(error); return []; }
   return data.map(a => a.name);
 }
@@ -228,7 +212,7 @@ window.switchGlobalAccount = async (val) => {
     if (newAcc && newAcc.trim() !== '') {
       const accs = await getAccountList();
       if (!accs.includes(newAcc.trim())) {
-        await supabase.from('accounts').insert([{ user_id: SHARED_ID, name: newAcc.trim() }]);
+        await supabase.from('accounts').insert([{ user_id: getCurrentUsername(), name: newAcc.trim() }]);
         window.activeAccount = newAcc.trim();
       } else {
         alert("Akun tersebut sudah ada.");
@@ -998,9 +982,9 @@ window.resetPersonalData = async () => {
   
   if (confirm("PERINGATAN KERAS! Anda yakin ingin MENGHAPUS SEMUA DATA transaksi, kategori, dan dompet? Aksi ini tidak dapat dibatalkan!")) {
     if (confirm("Silakan konfirmasi sekali lagi. Yakin ingin MENGHAPUS SEMUA DATA?")) {
-      await supabase.from('transactions').delete().eq('user_id', SHARED_ID);
-      await supabase.from('categories').delete().eq('user_id', SHARED_ID);
-      await supabase.from('accounts').delete().eq('user_id', SHARED_ID);
+      await supabase.from('transactions').delete().neq('id', 0);
+      await supabase.from('categories').delete().neq('id', 0);
+      await supabase.from('accounts').delete().neq('id', 0);
       
       await initUserData();
       
@@ -1024,8 +1008,8 @@ window.renameAccount = async (oldName) => {
     return;
   }
   
-  await supabase.from('accounts').update({ name: newName.trim() }).eq('user_id', SHARED_ID).eq('name', oldName);
-  await supabase.from('transactions').update({ akun: newName.trim() }).eq('user_id', SHARED_ID).eq('akun', oldName);
+  await supabase.from('accounts').update({ name: newName.trim() }).eq('name', oldName);
+  await supabase.from('transactions').update({ akun: newName.trim() }).eq('akun', oldName);
   
   if (window.activeAccount === oldName) {
     window.activeAccount = newName.trim();
@@ -1042,8 +1026,8 @@ window.deleteAccount = async (name) => {
     return;
   }
   if (confirm(`Hapus dompet "${name}"? Semua transaksi di dompet ini juga akan dihapus.`)) {
-    await supabase.from('transactions').delete().eq('user_id', SHARED_ID).eq('akun', name);
-    await supabase.from('accounts').delete().eq('user_id', SHARED_ID).eq('name', name);
+    await supabase.from('transactions').delete().eq('akun', name);
+    await supabase.from('accounts').delete().eq('name', name);
     
     if (window.activeAccount === name) {
       window.activeAccount = 'Semua Akun';
@@ -1242,7 +1226,7 @@ window.saveTransaction = async (e) => {
   const strDate = `${d.getDate().toString().padStart(2, '0')}-${d.toLocaleString('id-ID', { month: 'short' })}-${d.getFullYear()}`;
   
   const payload = {
-    user_id: SHARED_ID,
+    user_id: getCurrentUsername(),
     tanggal: strDate,
     jenis: document.getElementById('txJenis').value,
     nama: document.getElementById('txPihak').value,
@@ -1334,9 +1318,9 @@ window.saveCategory = async (e) => {
       btn.innerHTML = 'Simpan';
       return;
     }
-    await supabase.from('categories').update({ name }).eq('user_id', SHARED_ID).eq('name', oldName);
+    await supabase.from('categories').update({ name }).eq('name', oldName);
     // Update transactions that use the old category name
-    await supabase.from('transactions').update({ kategori: name }).eq('user_id', SHARED_ID).eq('kategori', oldName);
+    await supabase.from('transactions').update({ kategori: name }).eq('kategori', oldName);
   } else {
     // Add mode
     if (cats.includes(name)) {
@@ -1344,7 +1328,7 @@ window.saveCategory = async (e) => {
       btn.innerHTML = 'Simpan';
       return;
     }
-    await supabase.from('categories').insert([{ user_id: SHARED_ID, name }]);
+    await supabase.from('categories').insert([{ user_id: getCurrentUsername(), name }]);
   }
   
   btn.innerHTML = 'Simpan';
@@ -1354,7 +1338,7 @@ window.saveCategory = async (e) => {
 
 window.deleteCategory = async (name) => {
   if (confirm(`Hapus kategori "${name}"?`)) {
-    await supabase.from('categories').delete().eq('name', name).eq('user_id', SHARED_ID);
+    await supabase.from('categories').delete().eq('name', name);
     render();
   }
 };
