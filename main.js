@@ -11,12 +11,33 @@ const defaultAccounts = ['Dompet Utama'];
 const SHARED_ID = 'shared';
 
 async function initUserData() {
+  // Migrate old per-user data to shared ecosystem
+  // Update all non-shared categories to shared
+  await supabase.from('categories').update({ user_id: SHARED_ID }).neq('user_id', SHARED_ID);
+  await supabase.from('accounts').update({ user_id: SHARED_ID }).neq('user_id', SHARED_ID);
+  await supabase.from('transactions').update({ user_id: SHARED_ID }).neq('user_id', SHARED_ID);
+
+  // Deduplicate categories (in case migration created duplicates)
+  const { data: allCats } = await supabase.from('categories').select('*').eq('user_id', SHARED_ID);
+  if (allCats) {
+    const seen = new Set();
+    for (const cat of allCats) {
+      if (seen.has(cat.name)) {
+        await supabase.from('categories').delete().eq('id', cat.id);
+      } else {
+        seen.add(cat.name);
+      }
+    }
+  }
+
+  // Initialize default categories if none exist
   const { data: cats } = await supabase.from('categories').select('id').eq('user_id', SHARED_ID);
   if (!cats || cats.length === 0) {
     const catPayload = defaultCategories.map(c => ({ user_id: SHARED_ID, name: c }));
     await supabase.from('categories').insert(catPayload);
   }
   
+  // Initialize default account if none exist
   const { data: accs } = await supabase.from('accounts').select('id').eq('user_id', SHARED_ID);
   if (!accs || accs.length === 0) {
     await supabase.from('accounts').insert([{ user_id: SHARED_ID, name: 'Dompet Utama' }]);
