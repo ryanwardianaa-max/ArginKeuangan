@@ -386,6 +386,17 @@ async function renderDashboard() {
     filteredTxs = filteredTxs.filter(t => t.kategori === window.filterKategori);
   }
 
+  let dashFilteredTxs = filteredTxs;
+  if (window.dashDateFilter) {
+    const dashDate = new Date(window.dashDateFilter);
+    dashFilteredTxs = dashFilteredTxs.filter(tx => {
+      const txDate = parseDateStr(tx.tanggal);
+      return txDate.getFullYear() === dashDate.getFullYear() &&
+             txDate.getMonth() === dashDate.getMonth() &&
+             txDate.getDate() === dashDate.getDate();
+    });
+  }
+
 appDiv.innerHTML = `
     <div class="space-y-6 md:space-y-8">
       <!-- Header Band -->
@@ -449,6 +460,7 @@ appDiv.innerHTML = `
               ${window.filterJenis === 'All' ? 'Semua Transaksi' : 'Transaksi ' + window.filterJenis}
             </h3>
             <div class="w-full sm:w-auto flex gap-2">
+              <input type="date" onchange="setDashDateFilter(this.value)" value="${window.dashDateFilter || ''}" class="w-full sm:w-auto bg-surface-elevated-dark border border-hairline-on-dark text-on-dark rounded-md px-3 py-2 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary" title="Filter berdasarkan tanggal tertentu">
               <select onchange="setFilterKategori(this.value)" class="w-full sm:w-auto bg-surface-elevated-dark border border-hairline-on-dark text-on-dark rounded-md px-3 py-2 text-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary">
                 <option value="All">Semua Kategori</option>
                 ${uniqueCategories.map(c => `<option value="${c}" ${window.filterKategori === c ? 'selected' : ''}>${c}</option>`).join('')}
@@ -467,9 +479,9 @@ appDiv.innerHTML = `
                 </tr>
               </thead>
               <tbody class="divide-y divide-hairline-on-dark">
-                ${filteredTxs.length === 0 ? `
+                ${dashFilteredTxs.length === 0 ? `
                   <tr><td colspan="5" class="px-4 py-8 text-center text-muted text-sm">Tidak ada transaksi.</td></tr>
-                ` : filteredTxs.slice().reverse().map(tx => {
+                ` : dashFilteredTxs.map(tx => {
                   const isIncome = tx.jenis === 'Pemasukan';
                   const colorClass = isIncome ? 'text-trading-up' : 'text-trading-down';
                   const sign = isIncome ? '+' : '-';
@@ -625,6 +637,11 @@ appDiv.innerHTML = `
     }
   }, 0);
 }
+
+window.setDashDateFilter = (dateStr) => {
+  window.dashDateFilter = dateStr;
+  render();
+};
 
 window.setDateFilter = (type) => {
   window.dateFilterType = type;
