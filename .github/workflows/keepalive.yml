@@ -1,0 +1,19 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Berjalan otomatis setiap hari Minggu dan Rabu jam 00:00 (UTC)
+    - cron: '0 0 * * 0,3'
+  workflow_dispatch: # Mengizinkan untuk dijalankan manual dari GitHub Actions UI
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" \
+          -H "apikey: sb_publishable_P7bFTCnPhvyzqpmAxcAmRw_3cJCYbkY" \
+          -H "Authorization: Bearer sb_publishable_P7bFTCnPhvyzqpmAxcAmRw_3cJCYbkY" \
+          "https://wdilryxahcylzosahdof.supabase.co/rest/v1/app_users?limit=1"
+        shell: bash
